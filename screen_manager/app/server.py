@@ -2513,7 +2513,7 @@ class Manager:
         grid = (given or self.grid_of(screen)).for_firmware(self.firmware_version(inbox, screen))
         layout = validate_layout(data, grid=grid)
         # A CYD has no memory for camera images, whatever its firmware; say so before asking for an update.
-        if any(t['entity'].split('.')[0] in CAMERA_DOMAINS for t in layout['tiles']) and board_of(screen) not in camera_feed.BOXES:
+        if any(t['entity'].split('.')[0] in CAMERA_DOMAINS for t in layout['tiles']) and not camera_feed.takes_camera_tiles(screen):
             raise ValueError(t('addon.errors.layout.camera_unsupported'))
         # A map is a picture too (app 0.4.33).
         if any((t.get('options') or {}).get('display') == 'map' for t in layout['tiles']) and board_of(screen) not in camera_feed.BOXES:
@@ -4278,9 +4278,10 @@ def create_app(manager, development=False):
             # The Dock (docs/MODULES.md): the editor offers "Show in Dock" on a page of a board that has it.
             screen['dock'] = has_module(screen, 'dock')
             # Whether the board draws pictures (camera tiles, an alert's snapshot, an album cover): the boards with
-            # memory for them say so with their camera sizes (boards.json); the firmware that draws them is a
-            # separate question the editor asks by version, so an older screen still learns what an update brings.
-            screen['pictures'] = board_of(screen) in camera_feed.BOXES
+            # memory for them say so with their camera sizes (boards.json), and a screen of another kind in its Screen
+            # features (camera_feed.takes_camera_tiles); the firmware that draws them is a separate question the editor asks
+            # by version, so an older screen still learns what an update brings.
+            screen['pictures'] = camera_feed.takes_camera_tiles(screen)
             screen['alert_action'] = alert_service(screen.get('node'))
             screen['dismiss_action'] = alert_service(screen.get('node'), 'dismiss_alert')
             # What the editor may offer this screen, by the firmware the app's own checks go by (app 0.2.78) and the
