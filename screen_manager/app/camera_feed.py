@@ -23,7 +23,7 @@ import time
 import catalogue
 import tile_art
 import alert_layout
-from core import SHAPES, board_of, screen_firmware, shape_of
+from core import SHAPES, board_of, features_of, screen_firmware, shape_of
 
 LOG = logging.getLogger(__name__)
 
@@ -108,6 +108,16 @@ PICTURE_LARGE_SIDE = 2048
 PICTURE_LARGE_BYTES = 4 * 1024 * 1024
 BOXES = {shape['board']: {view: tuple(box) for view, box in shape['camera'].items()}
          for shape in SHAPES.values() if shape.get('camera')}
+# A screen that is none of these boards but draws a camera's picture on its tile itself says so in its Screen features
+# (core.features_of): the word `own_pictures`. TECHO5 on an Echo Show is one; it fetches the snapshot from Home Assistant
+# on its own. Such a screen takes camera tiles (takes_camera_tiles); what this app sends a screen for its pictures still
+# goes by its board (can_show and the rest), so it is sent none.
+OWN_PICTURES_FEATURE = 'own_pictures'
+
+
+def takes_camera_tiles(screen):
+    """Whether a screen draws camera tiles: its board has camera sizes here, or the screen says `own_pictures`."""
+    return bool(screen) and (board_of(screen) in BOXES or OWN_PICTURES_FEATURE in (features_of(screen) or ()))
 
 
 def boxes(screen):
